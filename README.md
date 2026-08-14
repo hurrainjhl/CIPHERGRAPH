@@ -1,223 +1,299 @@
-# CipherGraph
+# CipherGraph — Automated CTI Knowledge Graph Platform
 
-**CipherGraph** is a Cyber Threat Intelligence (CTI) Analysis Platform that transforms unstructured threat intelligence reports into interactive knowledge graphs powered by AI.
+<p align="center">
+  <strong>Turn unstructured Cyber Threat Intelligence reports into an interactive, searchable knowledge graph.</strong>
+</p>
 
-## 🚀 Features
+<p align="center">
+  <img src="https://img.shields.io/badge/Project-CipherGraph-6f42c1?style=for-the-badge" alt="CipherGraph">
+  <img src="https://img.shields.io/badge/Domain-Cyber%20Threat%20Intelligence-0b7285?style=for-the-badge" alt="CTI">
+  <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Graph-Neo4j-008CC1?style=for-the-badge" alt="Neo4j">
+</p>
 
-- **AI-Powered Entity Extraction**: Automatically extracts threat actors, indicators, victims, and tools from CTI reports using LLM technology
-- **Interactive Knowledge Graph**: Visualize relationships between entities in a dynamic, hierarchical graph
-- **Neo4j Integration**: Persistent graph database for complex threat intelligence queries
-- **Real-time Processing**: Background task processing with status monitoring
-- **Search & Investigation**: Search entities and investigate relationships with configurable depth
-- **Modern UI**: Sleek, cybersecurity-themed dashboard built with vanilla JavaScript and vis-network
-
-## 🛠️ Tech Stack
-
-**Backend:**
-- FastAPI (Python web framework)
-- Neo4j (Graph database)
-- OpenAI/OpenRouter API (LLM for entity extraction)
-- Pydantic (Data validation)
-
-**Frontend:**
-- HTML5, CSS3, JavaScript
-- vis-network (Graph visualization)
-- Font Awesome (Icons)
-
-**Infrastructure:**
-- Docker & Docker Compose
-- Uvicorn (ASGI server)
-
-## 📋 Prerequisites
-
-- Docker and Docker Compose
-- OpenAI API key or OpenRouter API key
-- Python 3.9+ (for local development)
-
-## ⚙️ Installation
-
-### Using Docker (Recommended)
-
-1. Clone the repository:
-```bash
-git clone https://github.com/hurrainjhl/CIPHERGRAPH.git
-cd CIPHERGRAPH
-```
-
-2. Configure environment variables:
-```bash
-cp backend/.env.example backend/.env
-```
-
-Edit `backend/.env` and add your API keys:
-```env
-NEO4J_URI=bolt://neo4j:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=password
-OPENAI_API_KEY=your_openai_api_key_here
-# OR use OpenRouter
-# OPENROUTER_API_KEY=your_openrouter_api_key_here
-CIPHERGRAPH_API_KEY=your_secret_key_here
-```
-
-3. Start the services:
-```bash
-docker-compose up -d
-```
-
-4. Access the application:
-- Web UI: http://localhost:8001
-- Neo4j Browser: http://localhost:7474
-- API Docs: http://localhost:8001/docs
-
-### Local Development
-
-1. Install Python dependencies:
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-2. Start Neo4j (via Docker):
-```bash
-docker run -d \
-  --name neo4j \
-  -p 7474:7474 -p 7687:7687 \
-  -e NEO4J_AUTH=neo4j/password \
-  neo4j:5.21.0
-```
-
-3. Run the FastAPI server:
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
-```
-
-## 🎯 Usage
-
-### 1. Upload Threat Intelligence
-
-Paste a CTI report or OSINT article into the text area and click **"Process Intelligence"**:
-
-```
-APT28, also known as Fancy Bear, targeted government agencies 
-using Mimikatz and PowerShell scripts. They compromised systems 
-at example.gov via phishing campaigns distributing malware through 
-malicious domains like evil-domain.com (192.168.1.100).
-```
-
-### 2. View the Knowledge Graph
-
-The system will extract entities and relationships, displaying them in an interactive graph:
-- **Red nodes**: Threat actors/attackers
-- **Cyan nodes**: Indicators (IPs, domains)
-- **Green nodes**: Victims/targets
-- **Purple nodes**: Tools/malware
-
-### 3. Investigate Entities
-
-- Click any node to see details in the investigation panel
-- Search for specific entities using the search bar
-- Filter entities by type (Attacker, Indicator, Victim, Tool)
-- Double-click to focus and investigate relationships
-
-## 📡 API Endpoints
-
-### POST `/episodes`
-Upload and process a CTI report
-```json
-{
-  "content": "Your threat intelligence text...",
-  "group_id": "campaign-name"
-}
-```
-
-### GET `/episodes/tasks/{task_id}`
-Check processing status
-
-### GET `/episodes/list`
-List all processed episodes
-
-### GET `/episodes/{episode_id}/graph`
-Retrieve graph data for a specific episode
-
-### POST `/search/nodes`
-Search for entities
-```json
-{
-  "query": "APT28",
-  "group_id": "default",
-  "limit": 20
-}
-```
-
-### POST `/investigate`
-Investigate entity relationships
-```json
-{
-  "entity_name": "APT28",
-  "depth": 2,
-  "group_id": "default"
-}
-```
-
-### GET `/health`
-Health check endpoint
-
-## 🔐 Security
-
-- API endpoints are protected with API key authentication via `X-CipherGraph-Key` header
-- Configure `CIPHERGRAPH_API_KEY` in environment variables
-- Health check endpoint is public
-
-## 🏗️ Project Structure
-
-```
-ciphergraph/
-├── backend/
-│   ├── app/
-│   │   ├── core/
-│   │   │   ├── database.py      # Neo4j connection
-│   │   │   └── llm.py           # LLM integration
-│   │   ├── models/
-│   │   │   └── api.py           # Pydantic models
-│   │   ├── services/
-│   │   │   └── graph_service.py # Graph operations
-│   │   └── main.py              # FastAPI app
-│   ├── config/
-│   │   └── settings.py          # Configuration
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   └── .env
-├── frontend/
-│   └── index.html               # Single-page app
-└── docker-compose.yml
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework
-- [Neo4j](https://neo4j.com/) - Graph database
-- [vis-network](https://visjs.github.io/vis-network/) - Graph visualization
-- [OpenAI](https://openai.com/) / [OpenRouter](https://openrouter.ai/) - LLM APIs
-
-## 📧 Contact
-
-For questions or support, please open an issue on GitHub.
+<p align="center">
+  <img src="https://img.shields.io/badge/LLM-GPT--4o--mini-412991?style=flat-square" alt="GPT-4o-mini">
+  <img src="https://img.shields.io/badge/Frontend-HTML%20%7C%20Tailwind%20%7C%20JavaScript-F7DF1E?style=flat-square" alt="Frontend">
+  <img src="https://img.shields.io/badge/Visualization-vis--network-2ea44f?style=flat-square" alt="vis-network">
+  <img src="https://img.shields.io/badge/Containerization-Docker%20Compose-2496ED?style=flat-square" alt="Docker">
+</p>
 
 ---
 
-**Built with ❤️ for the cybersecurity community**
+## 📌 Overview
+
+**CipherGraph** is an automated Cyber Threat Intelligence (CTI) knowledge graph platform designed to transform raw threat reports into structured, explorable intelligence.
+
+The platform accepts unstructured CTI reports through text input or file upload, uses an LLM to extract entities and relationships, stores the resulting information as a graph, and presents the intelligence through an interactive web interface.
+
+The project was developed as a Cyber Threat Intelligence semester project and reached a fully functional prototype state.
+
+---
+
+## 🎯 The Problem
+
+CTI information is often scattered across reports, blogs, PDFs, and other sources. Analysts may need to manually identify and correlate:
+
+- Threat actors
+- Malware and tools
+- Indicators of compromise
+- Victims and targeted sectors
+- Techniques
+- Relationships between entities
+
+CipherGraph addresses this problem by automatically converting unstructured intelligence into a graph that can be searched and investigated.
+
+---
+
+## ✨ Key Features
+
+| Feature | Description |
+|---------|-------------|
+|  **Report Ingestion** | Accept plain text or upload `.txt`, `.md`, and `.json` reports |
+|  **LLM Extraction** | Extract entities and relationships automatically using GPT-4o-mini |
+|  **Knowledge Graph** | Store CTI entities and relationships in Neo4j |
+|  **Demo Mode** | Fall back to in-memory storage when Neo4j is unavailable |
+|  **Async Processing** | Process long LLM extractions without blocking the UI |
+|  **Search & Filtering** | Search entity names and filter by entity type |
+|  **Entity Resolution** | Normalize aliases such as _Fancy Bear_, _APT-28_, and _FancyBear_ |
+|  **Investigation Panel** | Explore relationships and receive natural‑language summaries |
+|  **Multi‑Tenancy** | Isolate workspaces using `group_id` |
+|  **Optional Authentication** | Protect API requests using `X-CipherGraph-Key` |
+|  **Health Check** | Verify application availability through `/health` |
+|  **Graceful Degradation** | Continue operating in demo mode without Neo4j or other optional services |
+|  **Interactive Graph** | Zoom, pan, click nodes, and explore relationships |
+
+---
+
+##  Demo Video
+
+<p align="center">
+  <strong>Watch CipherGraph in action:</strong>
+</p>
+
+<p align="center">
+  <video controls width="100%" style="max-width: 800px; border-radius: 8px; border: 1px solid #333;">
+    <source src="demo.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</p>
+
+<p align="center">
+  <a href="demo.mp4">📥 Download / View Full Demo Video (MP4)</a>
+</p>
+
+---
+
+*The demo showcases report ingestion, entity extraction, interactive graph investigation, and alias resolution in real-time.*
+
+---
+
+##  Architecture
+
+CipherGraph uses an async-first three-tier architecture:
+
+```
+┌───────────────────────────────┐
+│       Web Browser / UI        │
+│ HTML + Tailwind + JavaScript  │
+│        vis-network            │
+└───────────────┬───────────────┘
+                │
+                ▼
+┌───────────────────────────────┐
+│        FastAPI Backend        │
+│                               │
+│  • REST API                   │
+│  • Async ingestion            │
+│  • Task polling               │
+│  • Entity resolution          │
+│  • Authentication             │
+└───────────────┬───────────────┘
+                │
+       ┌────────┴─────────┐
+       ▼                  ▼
+┌───────────────┐  ┌────────────────┐
+│     Neo4j     │  │ In-Memory Mode  │
+│ Persistent DB │  │   Demo/Fallback │
+└───────────────┘  └────────────────┘
+                │
+                ▼
+        ┌─────────────────┐
+        │ LLM Extraction  │
+        │ GPT-4o-mini via │
+        │   OpenRouter    │
+        └─────────────────┘
+```
+
+##  Technology Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Backend** | Python, FastAPI, Uvicorn, httpx, asynchronous APIs |
+| **Intelligence Extraction** | GPT-4o-mini via OpenRouter, structured JSON extraction |
+| **Graph Database** | Neo4j, async Neo4j driver, Cypher queries |
+| **Optional Embeddings** | Ollama, `mxbai-embed-large` |
+| **Frontend** | HTML5, Tailwind CSS, Vanilla JavaScript, vis‑network |
+| **Deployment** | Docker, Docker Compose |
+
+---
+
+## Getting Started
+
+### 1. Clone the Repository
+
+```bash
+git clone <YOUR-REPOSITORY-URL>
+cd CipherGraph
+```
+
+### 2. Create a Virtual Environment
+
+```bash
+python -m venv .venv
+```
+
+Activate it:
+
+- **Windows:** `.venv\Scripts\activate`
+- **Linux/macOS:** `source .venv/bin/activate`
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure API Credentials
+
+If the project configuration requires an LLM provider, configure the required API key through the environment/configuration mechanism used by the repository.
+
+For example:
+
+```env
+OPENROUTER_API_KEY=your_api_key_here
+```
+
+>  **Never commit API keys, passwords, database credentials, or other secrets to GitHub.**
+
+### 5. Start the Application
+
+The backend is designed to serve the frontend itself. Use the appropriate startup command. For example:
+
+```bash
+uvicorn main:app --reload
+```
+
+Then open:
+
+```
+http://127.0.0.1:8000
+```
+
+---
+
+##  Docker
+
+CipherGraph supports Docker Compose for services such as Neo4j and optional Ollama components.
+
+**Typical workflow:**
+
+```bash
+docker compose up --build
+```
+
+**To run in the background:**
+
+```bash
+docker compose up -d --build
+```
+
+**To stop the services:**
+
+```bash
+docker compose down
+```
+
+## Suggested Project Structure
+
+```
+CipherGraph/
+│
+├── main.py
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+│
+├── frontend/
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+│
+├── tests/
+│
+├── README.md
+└── .env.example
+```
+
+## Future Improvements
+
+Potential future enhancements include:
+
+-  Unit tests with `pytest` and mocking
+-  API rate limiting
+-  Structured JSON logging
+-  Full‑text search using Elasticsearch or Neo4j‑native search
+-  Vector similarity / semantic search
+-  JWT authentication with refresh tokens
+- STIX/TAXII import and export
+- Role‑based access control
+-  Improved graph scalability
+-  Production deployment support
+
+---
+
+##  Contributors
+
+| Team Member | Roll No. | Main Contribution |
+|-------------|----------|-------------------|
+| **Marryum Afzaal** |  | Backend API design, Neo4j integration, asynchronous task handling |
+| **Affaf Ahmed** | 2312 | Frontend development, graph visualization, investigation panel |
+| **Sumaiya Arshad** | 231279 | Cross‑browser testing and validation |
+| **Hoor Ul Ein Soomro** | 231315 | Multi‑tenancy implementation/testing and isolated workspace validation |
+
+
+---
+
+##  License
+
+*[LICENSE]*
+
+---
+
+## Acknowledgements
+
+CipherGraph builds upon the following technologies and concepts:
+
+- FastAPI
+- Neo4j
+- OpenAI GPT-4o-mini
+- OpenRouter
+- Ollama
+- Tailwind CSS
+- vis‑network
+- Docker
+- Python
+
+Special thanks to the **Cyber Threat Intelligence course/project environment** for providing the context in which CipherGraph was designed and developed.
+
+---
+
+<p align="center">
+  <strong>🕸️ CipherGraph — Connect the Threat Intelligence.</strong>
+</p>
+
+<p align="center">
+  <strong>Built with ❤️ for the cybersecurity community</strong>
+</p>
+```
+
