@@ -65,28 +65,6 @@ CipherGraph addresses this problem by automatically converting unstructured inte
 
 ---
 
-##  Demo Video
-
-<p align="center">
-  <strong>Watch CipherGraph in action:</strong>
-</p>
-
-<p align="center">
-  <video width="100%" controls>
-    <source src="demo.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-</p>
-
-<p align="center">
-  <em>The demo showcases report ingestion, entity extraction, interactive graph investigation, and alias resolution in real-time.</em>
-</p>
----
-
-*The demo showcases report ingestion, entity extraction, interactive graph investigation, and alias resolution in real-time.*
-
----
-
 ##  Architecture
 <p align="center">
 CipherGraph uses an async-first three-tier architecture:
@@ -253,12 +231,11 @@ Potential future enhancements include:
 
 ##  Contributors
 
-| Team Member | Roll No. | Main Contribution |
-|-------------|----------|-------------------|
-| **Marryum Afzaal** |  | Backend API design, Neo4j integration, asynchronous task handling |
-| **Affaf Ahmed** | 2312 | Frontend development, graph visualization, investigation panel |
-| **Sumaiya Arshad** | 231279 | Cross‑browser testing and validation |
-| **Hoor Ul Ein Soomro** | 231315 | Multi‑tenancy implementation/testing and isolated workspace validation |
+* **[Hoor ul ein Soomro](https://github.com/hurrainjhl)** 
+* **[Affaf Ahmad](https://github.com/Affafahmad)** 
+* **[Sumaiya Arshad](https://github.com/pickachu19)** 
+* **[Marryum Afzaal](https://github.com/marryum2004)**
+
 
 
 ---
