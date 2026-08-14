@@ -88,7 +88,7 @@ CipherGraph addresses this problem by automatically converting unstructured inte
 ---
 
 ##  Architecture
-
+<p align="center">
 CipherGraph uses an async-first three-tier architecture:
 
 ```
