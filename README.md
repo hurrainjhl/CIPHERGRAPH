@@ -72,16 +72,15 @@ CipherGraph addresses this problem by automatically converting unstructured inte
 </p>
 
 <p align="center">
-  <video controls width="100%" style="max-width: 800px; border-radius: 8px; border: 1px solid #333;">
+  <video width="100%" controls>
     <source src="demo.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </p>
 
 <p align="center">
-  <a href="demo.mp4">📥 Download / View Full Demo Video (MP4)</a>
+  <em>The demo showcases report ingestion, entity extraction, interactive graph investigation, and alias resolution in real-time.</em>
 </p>
-
 ---
 
 *The demo showcases report ingestion, entity extraction, interactive graph investigation, and alias resolution in real-time.*
