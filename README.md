@@ -266,7 +266,7 @@ Potential future enhancements include:
 
 ##  License
 
-*[LICENSE]*
+*MIT License*
 
 ---
 
