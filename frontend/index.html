@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CipherGraph // Cyber Threat Intelligence Platform</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+  <style>
+    :root {
+      --bg-primary: #070a13;
+      --bg-secondary: #0b1120;
+      --bg-card: rgba(17, 24, 39, 0.65);
+      --bg-card-hover: rgba(22, 32, 54, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-color-glow: rgba(0, 240, 255, 0.2);
+      
+      --accent-cyan: #00f0ff;
+      --accent-cyan-glow: rgba(0, 240, 255, 0.35);
+      --accent-blue: #3b82f6;
+      --accent-gold: #ffd700;
+      
+      --node-attacker: #ff4d5a;
+      --node-attacker-bg: rgba(255, 77, 90, 0.15);
+      --node-indicator: #00d8ff;
+      --node-indicator-bg: rgba(0, 216, 255, 0.12);
+      --node-victim: #00ff66;
+      --node-victim-bg: rgba(0, 255, 102, 0.12);
+      --node-tool: #bf5af2;
+      --node-tool-bg: rgba(191, 90, 242, 0.15);
+      --node-unknown: #a2a8b5;
+      
+      --font-sans: 'Inter', sans-serif;
+      --font-header: 'Outfit', sans-serif;
+      --font-mono: 'Fira Code', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-primary);
+      background-image: 
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+      background-size: 30px 30px;
+      color: #e2e8f0;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0, 240, 255, 0.4); }
+
+    .app-header {
+      background: linear-gradient(180deg, rgba(11, 17, 32, 0.9) 0%, rgba(7, 10, 19, 0.8) 100%);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+    .logo { display: flex; align-items: center; gap: 12px; font-family: var(--font-header); font-weight: 800; font-size: 1.5rem; letter-spacing: -0.5px; }
+    .logo i { color: var(--accent-cyan); font-size: 1.2rem; filter: drop-shadow(0 0 8px var(--accent-cyan-glow)); }
+    .logo-text { background: linear-gradient(90deg, #fff 0%, #a2a8b5 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .version-tag { font-size: 0.75rem; font-family: var(--font-mono); color: #64748b; margin-left: 8px; border: 1px solid rgba(100, 116, 139, 0.3); padding: 2px 6px; border-radius: 4px; }
+    
+    .status-badges { display: flex; gap: 16px; align-items: center; }
+    .status-badge { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 600; font-family: var(--font-mono); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); }
+    .status-badge.online i { color: #00ff66; filter: drop-shadow(0 0 5px rgba(0, 255, 102, 0.5)); }
+    .status-badge.offline i { color: #ff4d5a; }
+    
+    .header-actions { display: flex; gap: 12px; }
+    .btn-icon { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #a2a8b5; width: 36px; height: 36px; border-radius: 6px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+    .btn-icon:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
+    .btn-text { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #a2a8b5; padding: 0 12px; height: 36px; border-radius: 6px; cursor: pointer; font-family: var(--font-sans); font-size: 0.8rem; font-weight: 500; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+    .btn-text:hover { background: rgba(255,255,255,0.05); color: #fff; }
+
+    #demo-banner { background: linear-gradient(90deg, #d97706 0%, #b45309 100%); color: #fff; text-align: center; font-size: 0.8rem; font-weight: 500; padding: 6px 0; display: none; align-items: center; justify-content: center; gap: 10px; }
+    #demo-banner button { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 2px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; }
+    #demo-banner button:hover { background: rgba(0,0,0,0.5); }
+
+    .main-layout { display: flex; flex: 1; height: calc(100vh - 64px); }
+
+    .sidebar { width: 320px; background: rgba(11, 17, 32, 0.7); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; z-index: 40; backdrop-filter: blur(10px); }
+    .sidebar-right { border-right: none; border-left: 1px solid var(--border-color); width: 340px; }
+    
+    .panel-header { display: flex; align-items: center; gap: 10px; padding: 16px 20px; font-family: var(--font-header); font-weight: 600; font-size: 0.85rem; letter-spacing: 1px; color: #a2a8b5; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .panel-header i { color: var(--accent-cyan); }
+    
+    .panel-content { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 24px; }
+    
+    .section-title { font-size: 0.75rem; font-weight: 600; color: #64748b; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .upload-zone { border: 1px dashed rgba(0, 240, 255, 0.3); border-radius: 8px; padding: 20px; text-align: center; background: rgba(0, 240, 255, 0.02); transition: all 0.2s; cursor: pointer; margin-bottom: 16px; }
+    .upload-zone:hover { background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.6); }
+    .upload-zone i { font-size: 2rem; color: var(--accent-cyan); margin-bottom: 10px; opacity: 0.8; }
+    .upload-zone p { font-size: 0.85rem; color: #a2a8b5; }
+    .upload-zone span { color: var(--accent-cyan); font-weight: 500; }
+    
+    .textarea-container { position: relative; margin-bottom: 16px; }
+    textarea { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 12px; color: #fff; font-family: var(--font-sans); font-size: 0.85rem; resize: vertical; min-height: 120px; outline: none; transition: border-color 0.2s; }
+    textarea:focus { border-color: var(--accent-cyan); box-shadow: 0 0 0 1px var(--accent-cyan); }
+    
+    .btn-primary { width: 100%; background: linear-gradient(90deg, #00f0ff 0%, #0080ff 100%); color: #000; border: none; padding: 12px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-primary:hover { box-shadow: 0 0 15px rgba(0, 240, 255, 0.4); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    
+    .search-box { position: relative; margin-bottom: 16px; }
+    .search-box input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px 10px 10px 36px; color: #fff; font-size: 0.85rem; outline: none; }
+    .search-box input:focus { border-color: var(--accent-cyan); }
+    .search-box i { position: absolute; left: 12px; top: 12px; color: #64748b; font-size: 0.9rem; }
+    .search-box button { position: absolute; right: 4px; top: 4px; bottom: 4px; background: rgba(0, 240, 255, 0.1); color: var(--accent-cyan); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 4px; padding: 0 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .search-box button:hover { background: var(--accent-cyan); color: #000; }
+    
+    .filter-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .filter-tag { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #a2a8b5; padding: 4px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
+    .filter-tag:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .filter-tag.active { background: rgba(0, 240, 255, 0.15); border-color: var(--accent-cyan); color: var(--accent-cyan); }
+    
+    .entity-list { display: flex; flex-direction: column; gap: 8px; }
+    .entity-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+    .entity-item:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); transform: translateX(2px); }
+    .entity-name { font-size: 0.85rem; font-weight: 500; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+    
+    .badge { font-size: 0.65rem; font-weight: 700; padding: 3px 6px; border-radius: 4px; letter-spacing: 0.5px; text-transform: uppercase; }
+    .badge.attacker { background: var(--node-attacker-bg); color: var(--node-attacker); border: 1px solid rgba(255, 77, 90, 0.3); }
+    .badge.indicator { background: var(--node-indicator-bg); color: var(--node-indicator); border: 1px solid rgba(0, 216, 255, 0.3); }
+    .badge.victim { background: var(--node-victim-bg); color: var(--node-victim); border: 1px solid rgba(0, 255, 102, 0.3); }
+    .badge.tool { background: var(--node-tool-bg); color: var(--node-tool); border: 1px solid rgba(191, 90, 242, 0.3); }
+    .badge.unknown { background: var(--node-unknown-bg); color: var(--node-unknown); border: 1px solid rgba(162, 168, 181, 0.3); }
+    
+    .recent-item { padding: 12px; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(0, 240, 255, 0.1); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; }
+    .recent-item:hover { background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.3); }
+    .recent-meta { display: flex; flex-direction: column; gap: 4px; }
+    .recent-title { font-size: 0.85rem; font-weight: 600; color: #00f0ff; }
+    .recent-desc { font-size: 0.7rem; color: #64748b; }
+    .recent-stats { font-size: 0.75rem; font-weight: 600; color: #e2e8f0; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; }
+    .btn-delete-log { background: transparent; border: none; color: #64748b; cursor: pointer; padding: 4px; transition: color 0.2s; }
+    .btn-delete-log:hover { color: #fff; }
+
+    .graph-container { flex: 1; position: relative; background: radial-gradient(circle at center, rgba(11, 17, 32, 0) 0%, rgba(7, 10, 19, 0.8) 100%); }
+    #network-canvas { width: 100%; height: 100%; outline: none; }
+    
+    .graph-header { position: absolute; top: 0; left: 0; right: 0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 10; }
+    .graph-title { font-family: var(--font-header); font-weight: 600; font-size: 0.85rem; letter-spacing: 1px; color: #a2a8b5; text-transform: uppercase; pointer-events: auto; }
+    .graph-stats { font-family: var(--font-mono); font-size: 0.75rem; color: #64748b; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; pointer-events: auto; }
+    .graph-legend { margin-top: 12px; background: rgba(7, 10, 19, 0.8); border: 1px solid var(--border-color); padding: 12px; border-radius: 8px; backdrop-filter: blur(4px); pointer-events: auto; }
+    .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 0.75rem; font-weight: 600; color: #a2a8b5; }
+    .legend-item:last-child { margin-bottom: 0; }
+    .legend-color { width: 8px; height: 8px; border-radius: 50%; }
+    
+    .graph-controls { position: absolute; bottom: 24px; left: 24px; display: flex; gap: 8px; z-index: 10; }
+    
+    .node-detail-card { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .detail-title { font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 6px; font-family: var(--font-header); }
+    
+    .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.75rem; }
+    .info-label { color: #64748b; font-weight: 500; text-transform: uppercase; }
+    .info-value { color: #e2e8f0; font-family: var(--font-mono); }
+    
+    .detail-desc { font-size: 0.85rem; color: #a2a8b5; line-height: 1.5; margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 2px solid var(--accent-cyan); }
+    
+    .relations-list { display: flex; flex-direction: column; gap: 8px; }
+    .relation-item { display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; font-size: 0.75rem; }
+    .relation-type { font-family: var(--font-mono); color: var(--accent-cyan); font-weight: 500; font-size: 0.7rem; }
+    .relation-target { font-weight: 600; color: #fff; }
+    
+    #radar-status { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px; background: rgba(0, 240, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 6px; display: none; }
+    .radar-spinner { width: 16px; height: 16px; border: 2px solid rgba(0, 240, 255, 0.3); border-top-color: var(--accent-cyan); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .radar-text { font-size: 0.8rem; color: var(--accent-cyan); font-family: var(--font-mono); font-weight: 500; }
+  </style>
+</head>
+<body>
+
+  <div id="demo-banner">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <span>FastAPI connected, but Neo4j is offline. Using <strong>Mock Database</strong>. Check Docker / local setup.</span>
+    <button onclick="checkBackendHealth(true)">Retry Connection</button>
+  </div>
+
+  <header class="app-header">
+    <div class="logo">
+      <i class="fa-solid fa-network-wired"></i>
+      <span class="logo-text">CipherGraph</span>
+      <span class="version-tag">CTI Analysis Dashboard v2.0</span>
+    </div>
+    <div class="status-badges">
+      <div class="status-badge online" id="api-status-badge">
+        <i class="fa-solid fa-circle"></i>
+        <span id="api-status-text">API: ONLINE</span>
+      </div>
+      <div class="status-badge online" id="db-status-badge">
+        <i class="fa-solid fa-circle"></i>
+        <span id="db-status-text">DB: NEO4J CONNECTED</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-text"><i class="fa-solid fa-key"></i> Access Keys</button>
+      <button class="btn-text" onclick="network.fit({animation: true})"><i class="fa-solid fa-arrows-rotate"></i> Reset Layout</button>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <aside class="sidebar">
+      <div class="panel-header">
+        <i class="fa-solid fa-server"></i> INGESTION HUBS
+      </div>
+      
+      <div class="panel-content">
+        <div>
+          <div class="section-title">
+            <span><i class="fa-solid fa-cloud-arrow-up"></i> Upload CTI Episode</span>
+          </div>
+          
+          <div class="upload-zone" onclick="document.getElementById('file-upload').click()">
+            <i class="fa-solid fa-folder-open"></i>
+            <p>Drag & drop report or <span>browse</span></p>
+            <input type="file" id="file-upload" style="display: none;" accept=".txt,.json,.md,.csv">
+          </div>
+          
+          <div class="section-title" style="margin-top: 16px; margin-bottom: 8px;">
+            <span>OR PASTE OSINT REPORT</span>
+          </div>
+          
+          <div class="textarea-container">
+            <textarea id="intel-input" placeholder="Paste Cyber Threat Intelligence report text or OSINT article snippet..."></textarea>
+            <i class="fa-solid fa-pen" style="position: absolute; right: 12px; bottom: 12px; color: rgba(255,255,255,0.2); font-size: 0.8rem;"></i>
+          </div>
+          
+          <button class="btn-primary" id="btn-process" onclick="processIntelligence()">
+            <i class="fa-solid fa-bolt"></i> Process Intelligence
+          </button>
+          
+          <div id="radar-status">
+            <div class="radar-spinner"></div>
+            <span class="radar-text" id="radar-status-text">Extracting Entities...</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">
+            <span><i class="fa-solid fa-clock-rotate-left"></i> Recent Ingestions</span>
+            <button class="btn-delete-log" style="font-size: 0.7rem; text-transform: none;">Clear Logs</button>
+          </div>
+          <div id="recent-uploads" style="max-height: 200px; overflow-y: auto; padding-right: 4px;">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <div style="flex: 1;">
+          <div class="section-title">
+            <span><i class="fa-solid fa-magnifying-glass"></i> Search Entities</span>
+          </div>
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search-input" placeholder="Search entity (e.g. APT28, Mimikatz)" onkeypress="if(event.key==='Enter') searchEntities()">
+            <button onclick="searchEntities()">Search</button>
+          </div>
+          
+          <div class="filter-tags">
+            <div class="filter-tag active" onclick="setFilter('all', this)">ALL</div>
+            <div class="filter-tag" onclick="setFilter('attacker', this)">ATTACKER</div>
+            <div class="filter-tag" onclick="setFilter('indicator', this)">INDICATOR</div>
+            <div class="filter-tag" onclick="setFilter('victim', this)">VICTIM</div>
+            <div class="filter-tag" onclick="setFilter('tool', this)">TOOL</div>
+          </div>
+          
+          <div class="entity-list" id="catalog-list">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="graph-container">
+      <div class="graph-header">
+        <div>
+          <div class="graph-title">RELATIONSHIP GRAPH</div>
+          <div class="graph-legend">
+            <div class="legend-item"><div class="legend-color" style="background: var(--node-attacker);"></div> ATTACKER</div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--node-indicator);"></div> INDICATOR</div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--node-tool);"></div> TOOL</div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--node-victim);"></div> VICTIM</div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--accent-gold); box-shadow: 0 0 8px var(--accent-gold);"></div> HIGHLIGHTED PATH</div>
+          </div>
+        </div>
+        <div class="graph-stats">
+          <div>CLICK NODE TO ANALYZE // DOUBLE CLICK TO FOCUS</div>
+          <div style="margin-top: 8px;" id="graph-counts">Nodes: 0 // Edges: 0</div>
+        </div>
+      </div>
+      
+      <div id="network-canvas"></div>
+      
+      <div class="graph-controls">
+        <button class="btn-icon" onclick="network.fit({animation: true})" title="Fit to screen"><i class="fa-solid fa-expand"></i></button>
+        <button class="btn-icon" style="color: var(--accent-cyan); border-color: rgba(0, 240, 255, 0.3);" title="Run Physics"><i class="fa-solid fa-cube"></i></button>
+        <button class="btn-icon" title="Clear Canvas" onclick="clearThreatGraph()"><i class="fa-solid fa-trash"></i></button>
+        <button class="btn-icon" title="Zoom In" onclick="network.moveTo({scale: network.getScale() * 1.2})"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+        <button class="btn-icon" title="Zoom Out" onclick="network.moveTo({scale: network.getScale() * 0.8})"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+      </div>
+    </main>
+
+    <aside class="sidebar sidebar-right">
+      <div class="panel-header">
+        <i class="fa-solid fa-shield-halved"></i> INVESTIGATION SUMMARY
+      </div>
+      
+      <div class="panel-content" id="investigation-panel">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #64748b; text-align: center; gap: 16px;">
+          <i class="fa-solid fa-user-secret" style="font-size: 3rem; opacity: 0.2;"></i>
+          <div>
+            <div style="font-weight: 600; color: #a2a8b5; margin-bottom: 8px;">Awaiting Threat Selection</div>
+            <div style="font-size: 0.75rem; line-height: 1.5;">Click any node in the graph, or double-click a search result to trigger CTI investigation and generate natural language summaries.</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    const API_BASE = "";
+    let network = null;
+    let nodesDataset = new vis.DataSet();
+    let edgesDataset = new vis.DataSet();
+    let activeEpisodeId = null;
+    let isDemoMode = false;
+    let pollInterval = null;
+    let activeFilter = 'all';
+
+    function initNetwork() {
+      const container = document.getElementById('network-canvas');
+      const data = { nodes: nodesDataset, edges: edgesDataset };
+      const options = {
+        nodes: {
+          shape: 'dot',
+          size: 16,
+          font: { color: '#e2e8f0', size: 12, face: 'Inter', multi: 'html', strokeWidth: 0 },
+          borderWidth: 2,
+          shadow: { enabled: true, color: 'rgba(0,0,0,0.5)', size: 10, x: 0, y: 5 }
+        },
+        edges: {
+          width: 1.5,
+          color: { color: 'rgba(162, 168, 181, 0.3)', highlight: '#00f0ff', hover: 'rgba(162, 168, 181, 0.6)' },
+          smooth: { type: 'continuous' },
+          font: { color: '#64748b', size: 10, align: 'top', background: 'transparent', strokeWidth: 0 },
+          arrows: { to: { enabled: true, scaleFactor: 0.5 } }
+        },
+        physics: {
+          enabled: true,
+          solver: 'hierarchicalRepulsion',
+          hierarchicalRepulsion: { centralGravity: 0.0, springLength: 150, springConstant: 0.01, nodeDistance: 150, damping: 0.09 }
+        },
+        layout: {
+          hierarchical: { enabled: true, direction: 'UD', sortMethod: 'directed', levelSeparation: 150, nodeSpacing: 150 }
+        },
+        interaction: { hover: true, tooltipDelay: 200 }
+      };
+
+      network = new vis.Network(container, data, options);
+      
+      network.on('click', function(params) {
+        if (params.nodes.length > 0) {
+          const nodeId = params.nodes[0];
+          const node = nodesDataset.get(nodeId);
+          populateInvestigationPanel(node);
+        }
+      });
+    }
+
+    function getNodeColors(typeStr) {
+      const type = (typeStr || '').toLowerCase();
+      if (type.includes('attacker') || type.includes('actor')) return { border: '#ff4d5a', background: 'rgba(255, 77, 90, 0.1)', highlight: { border: '#ff4d5a', background: 'rgba(255, 77, 90, 0.3)' } };
+      if (type.includes('indicator') || type.includes('ip') || type.includes('domain')) return { border: '#00d8ff', background: 'rgba(0, 216, 255, 0.1)', highlight: { border: '#00d8ff', background: 'rgba(0, 216, 255, 0.3)' } };
+      if (type.includes('victim') || type.includes('target')) return { border: '#00ff66', background: 'rgba(0, 255, 102, 0.1)', highlight: { border: '#00ff66', background: 'rgba(0, 255, 102, 0.3)' } };
+      if (type.includes('tool') || type.includes('malware')) return { border: '#bf5af2', background: 'rgba(191, 90, 242, 0.1)', highlight: { border: '#bf5af2', background: 'rgba(191, 90, 242, 0.3)' } };
+      return { border: '#a2a8b5', background: 'rgba(162, 168, 181, 0.1)', highlight: { border: '#a2a8b5', background: 'rgba(162, 168, 181, 0.3)' } };
+    }
+
+    async function checkBackendHealth() {
+      try {
+        const res = await fetch(`${API_BASE}/health`);
+        const data = await res.json();
+        if (data.neo4j_connected) {
+          document.getElementById('db-status-badge').className = "status-badge online";
+          document.getElementById('db-status-text').innerText = "DB: NEO4J CONNECTED";
+          document.getElementById('demo-banner').style.display = "none";
+          isDemoMode = false;
+        } else {
+          document.getElementById('db-status-badge').className = "status-badge offline";
+          document.getElementById('db-status-text').innerText = "DB: MOCK (NEO4J DOWN)";
+          document.getElementById('demo-banner').style.display = "flex";
+          isDemoMode = true;
+        }
+      } catch (e) {
+        document.getElementById('api-status-badge').className = "status-badge offline";
+        document.getElementById('api-status-text').innerText = "API: OFFLINE";
+      }
+    }
+
+    async function fetchAllEpisodes() {
+      if (isDemoMode) return;
+      try {
+        const res = await fetch(`${API_BASE}/episodes/list`);
+        const data = await res.json();
+        const container = document.getElementById('recent-uploads');
+        
+        if (!data.episodes || data.episodes.length === 0) {
+          container.innerHTML = `<div style="font-size: 0.72rem; color: #64748b; text-align: center; padding: 20px 0;">No isolated reports available.</div>`;
+          return;
+        }
+        
+        container.innerHTML = data.episodes.map(ep => {
+          const dateStr = ep.date ? new Date(ep.date).toLocaleString() : 'Unknown';
+          return `
+          <div class="recent-item" onclick="loadEpisodeGraph('${ep.id}')">
+            <div class="recent-meta">
+              <span class="recent-title">Report: ${ep.id.substring(0,8)}</span>
+              <span class="recent-desc">Time: ${dateStr}</span>
+            </div>
+            <div>
+              <button class="btn-delete-log" title="Load Graph" style="pointer-events: none;"><i class="fa-solid fa-folder-open"></i></button>
+            </div>
+          </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadEpisodeGraph(episodeId) {
+      activeEpisodeId = episodeId;
+      try {
+        const res = await fetch(`${API_BASE}/episodes/${episodeId}/graph`);
+        const data = await res.json();
+        const graph = data.graph;
+        
+        nodesDataset.clear();
+        edgesDataset.clear();
+        
+        const formattedNodes = graph.nodes.map(n => {
+          const color = getNodeColors(n.group);
+          return { id: n.id, label: n.label, group: n.group, color: color, title: n.title };
+        });
+        
+        nodesDataset.add(formattedNodes);
+        edgesDataset.add(graph.edges);
+        
+        document.getElementById('graph-counts').innerText = `Nodes: ${nodesDataset.length} // Edges: ${edgesDataset.length}`;
+        network.fit({ animation: { duration: 800 } });
+        
+        renderCatalog(formattedNodes);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderCatalog(nodesList) {
+      const container = document.getElementById('catalog-list');
+      if (!nodesList || nodesList.length === 0) {
+        container.innerHTML = `<div style="font-size: 0.72rem; color: #64748b; text-align: center; padding: 10px 0;">No nodes found.</div>`;
+        return;
+      }
+      
+      let filtered = nodesList;
+      if (activeFilter !== 'all') {
+        filtered = nodesList.filter(n => {
+          const t = (n.group || '').toLowerCase();
+          if (activeFilter === 'attacker') return t.includes('attacker') || t.includes('actor');
+          return t.includes(activeFilter);
+        });
+      }
+      
+      container.innerHTML = filtered.map(n => {
+        let badge = 'unknown';
+        const type = (n.group || '').toLowerCase();
+        if (type.includes('attacker') || type.includes('actor')) badge = 'attacker';
+        else if (type.includes('indicator') || type.includes('ip') || type.includes('domain')) badge = 'indicator';
+        else if (type.includes('victim') || type.includes('target')) badge = 'victim';
+        else if (type.includes('tool') || type.includes('malware')) badge = 'tool';
+        
+        return `
+          <div class="entity-item" onclick="investigateEntity('${n.label}')">
+            <span class="entity-name">${n.label}</span>
+            <span class="badge ${badge}">${n.group || 'Entity'}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setFilter(type, el) {
+      activeFilter = type;
+      document.querySelectorAll('.filter-tag').forEach(e => e.classList.remove('active'));
+      el.classList.add('active');
+      renderCatalog(nodesDataset.get());
+    }
+
+    async function processIntelligence() {
+      const text = document.getElementById('intel-input').value;
+      if (!text) return;
+      
+      document.getElementById('radar-status').style.display = "flex";
+      document.getElementById('btn-process').disabled = true;
+      document.getElementById('radar-status-text').innerText = "Uploading to OpenRouter...";
+      
+      try {
+        const res = await fetch(`${API_BASE}/episodes`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ content: text, group_id: 'default' })
+        });
+        const data = await res.json();
+        pollTask(data.task_id);
+      } catch (err) {
+        console.error(err);
+        resetIngestionUI();
+      }
+    }
+
+    function pollTask(taskId) {
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`${API_BASE}/episodes/tasks/${taskId}`);
+          const data = await res.json();
+          document.getElementById('radar-status-text').innerText = `Status: ${data.status.toUpperCase()}`;
+          
+          if (data.status === 'completed') {
+            clearInterval(pollInterval);
+            document.getElementById('intel-input').value = '';
+            await fetchAllEpisodes();
+            if (data.episode_id) await loadEpisodeGraph(data.episode_id);
+            resetIngestionUI();
+          } else if (data.status === 'failed') {
+            clearInterval(pollInterval);
+            resetIngestionUI();
+            alert("Extraction failed.");
+          }
+        } catch (err) {
+          clearInterval(pollInterval);
+          resetIngestionUI();
+        }
+      }, 2000);
+    }
+    
+    function resetIngestionUI() {
+      document.getElementById('radar-status').style.display = "none";
+      document.getElementById('btn-process').disabled = false;
+    }
+
+    function clearThreatGraph() {
+      nodesDataset.clear();
+      edgesDataset.clear();
+      activeEpisodeId = null;
+      document.getElementById('graph-counts').innerText = "Nodes: 0 // Edges: 0";
+      renderCatalog([]);
+    }
+
+    async function searchEntities() {
+      const q = document.getElementById('search-input').value;
+      if (!q) {
+        renderCatalog(nodesDataset.get());
+        return;
+      }
+      const norm = q.toLowerCase();
+      const filtered = nodesDataset.get().filter(n => n.label.toLowerCase().includes(norm) || (n.group && n.group.toLowerCase().includes(norm)));
+      renderCatalog(filtered);
+    }
+
+    async function investigateEntity(name) {
+      if (!activeEpisodeId) return;
+      try {
+        const res = await fetch(`${API_BASE}/investigate`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ entity_name: name, depth: 2, group_id: activeEpisodeId })
+        });
+        const data = await res.json();
+        
+        // Highlight logic
+        const targetNode = nodesDataset.get().find(n => n.label === name);
+        if (targetNode) {
+          network.focus(targetNode.id, { scale: 1.2, animation: true });
+          populateInvestigationPanel(targetNode);
+          
+          // Optional: custom highlighting
+          nodesDataset.update({ id: targetNode.id, color: { border: '#ffd700', background: targetNode.color.background, highlight: { border: '#ffd700' } }, shadow: { color: 'rgba(255, 215, 0, 0.8)', size: 20 } });
+          setTimeout(() => {
+            nodesDataset.update({ id: targetNode.id, color: getNodeColors(targetNode.group), shadow: { color: 'rgba(0,0,0,0.5)', size: 10 } });
+          }, 3000);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    
+    function populateInvestigationPanel(node) {
+      const panel = document.getElementById('investigation-panel');
+      let badge = 'unknown';
+      const type = (node.group || '').toLowerCase();
+      if (type.includes('attacker') || type.includes('actor')) badge = 'attacker';
+      else if (type.includes('indicator') || type.includes('ip') || type.includes('domain')) badge = 'indicator';
+      else if (type.includes('victim') || type.includes('target')) badge = 'victim';
+      else if (type.includes('tool') || type.includes('malware')) badge = 'tool';
+      
+      panel.innerHTML = `
+        <div class="node-detail-card">
+          <div class="detail-header">
+            <div>
+              <div class="detail-title">${node.label}</div>
+              <div class="badge ${badge}">${node.group}</div>
+            </div>
+          </div>
+          <div class="detail-desc">
+            ${node.title || 'No description available for this entity.'}
+          </div>
+          <div class="info-row">
+            <span class="info-label">NODE IDENTIFIER</span>
+            <span class="info-value">${node.id.substring(0,12)}...</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">INTEL SOURCE</span>
+            <span class="info-value">Local Intelligence Base</span>
+          </div>
+        </div>
+      `;
+    }
+
+    initNetwork();
+    checkBackendHealth();
+    setTimeout(fetchAllEpisodes, 1000);
+  </script>
+</body>
+</html>
