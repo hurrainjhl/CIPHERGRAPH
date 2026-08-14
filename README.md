@@ -29,6 +29,12 @@ The platform accepts unstructured CTI reports through text input or file upload,
 The project was developed as a Cyber Threat Intelligence semester project and reached a fully functional prototype state.
 
 ---
+## Screenshots
+
+<p align="center">
+  <img width="100%" alt="CipherGraph Dashboard" src="https://github.com/hurrainjhl/CIPHERGRAPH/blob/main/Screenshot%202026-08-15%20013445.png?raw=true" />
+</p>
+---
 
 ## 🎯 The Problem
 
